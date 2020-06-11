@@ -1,6 +1,6 @@
 import pygame
 import random
-
+import os
 
 class Menu(pygame.sprite.Sprite):
     def __init__(self, num):
@@ -55,10 +55,9 @@ class Board(pygame.sprite.Sprite):
         self.left = (sc_width - (width * cell_size)) / 2
         self.top = (sc_height - (height * cell_size)) / 2
         self.rect = pygame.Rect((self.left, self.top), (self.width * self.cell_size, self.height * self.cell_size))
-        self.image = pygame.Surface((self.width * self.cell_size, self.height * self.cell_size))
+        self.image = load_image('board.png')
 
     def render(self):
-        self.image.fill(GREEN)
         for i in range(self.height):
             for j in range(self.width):
                 left = j * self.cell_size
@@ -81,7 +80,47 @@ class Wall(pygame.sprite.Sprite):
         else:
             self.top = Board.top + (top - 1) * self.cell_size
         self.rect = pygame.Rect((self.left, self.top), (self.height, self.width))
-        self.image = pygame.Surface((self.height, self.width))
+        if self.height == 682 and self.width == 22:
+            self.wall_surf = load_image('grass.png')
+        elif self.height == 22 and self.width == 616:
+            self.wall_surf = pygame.transform.rotate(load_image('grass.png'), 90)
+        elif self.height == 44 and self.width == 44:
+            self.wall_surf = load_image('bush2x2.png')
+        elif self.height == 110 and self.width == 110:
+            self.wall_surf = load_image('house5x5.png')
+        elif self.height == 66 and self.width == 110:
+            self.wall_surf = load_image('house3x5.png')
+        elif self.height == 66 and self.width == 88:
+            self.wall_surf = load_image('house3x4.png')
+        elif self.height == 44 and self.width == 220:
+            self.wall_surf = load_image('cars2x10.png')
+        elif self.height == 66 and self.width == 44:
+            self.wall_surf = load_image('cars3x2.png')
+        elif self.height == 110 and self.width == 44:
+            self.wall_surf = load_image('bench5x2.png')
+        elif self.height == 22 and self.width == 176:
+            self.wall_surf = load_image('ribbon1x8.png')
+        elif self.height == 66 and self.width == 22:
+            self.wall_surf = load_image('ribbon3x1.png')
+        elif self.height == 22 and self.width == 66 and top == 11:
+            self.wall_surf = load_image('ribbon1x3upper.png')
+        elif self.height == 22 and self.width == 66 and top == 16:
+            self.wall_surf = load_image('ribbon1x3lower.png')
+        elif self.height == 88 and self.width == 44:
+            self.wall_surf = load_image('flower4x2.png')
+        elif self.height == 44 and self.width == 176:
+            self.wall_surf = load_image('cars2x8.png')
+        elif self.height == 44 and self.width == 110:
+            self.wall_surf = load_image('fountain2x5.png')
+        elif self.height == 44 and self.width == 88:
+            self.wall_surf = load_image('sandbox2x4.png')
+        elif self.height == 176 and self.width == 44:
+            self.wall_surf = load_image('lawn8x2.png')
+        elif self.height == 44 and self.width == 66:
+            self.wall_surf = load_image('tree2x3.png')
+        else:
+            self.wall_surf = pygame.Surface((self.width, self.height))
+        self.image = pygame.transform.scale(self.wall_surf, (self.height, self.width))
 
 
 class Player(pygame.sprite.Sprite):
@@ -92,8 +131,7 @@ class Player(pygame.sprite.Sprite):
         self.top = Board.top + y * self.cell_size
         self.way = " "
         self.rect = pygame.Rect((self.left, self.top), (self.cell_size, self.cell_size))
-        self.image = pygame.Surface((self.cell_size, self.cell_size))
-        self.image.fill(RED)
+        self.image = load_image('player_d.png')
 
     def move(self, new_way):
         global try_way
@@ -107,21 +145,29 @@ class Player(pygame.sprite.Sprite):
             if pygame.sprite.spritecollideany(self, Walls):
                 self.rect.move_ip(0, 11)
                 self.way = old_way
+            else:
+                self.image = load_image('player_u.png')
         elif self.way == "down":
             self.rect.move_ip(0, 11)
             if pygame.sprite.spritecollideany(self, Walls):
                 self.rect.move_ip(0, -11)
                 self.way = old_way
+            else:
+                self.image = load_image('player_d.png')
         elif self.way == "left":
             self.rect.move_ip(-11, 0)
             if pygame.sprite.spritecollideany(self, Walls):
                 self.rect.move_ip(11, 0)
                 self.way = old_way
+            else:
+                self.image = load_image('player_l.png')
         elif self.way == "right":
             self.rect.move_ip(11, 0)
             if pygame.sprite.spritecollideany(self, Walls):
                 self.rect.move_ip(-11, 0)
                 self.way = old_way
+            else:
+                self.image = load_image('player_r.png')
         try_way += 1
 
 
@@ -132,8 +178,7 @@ class Virus(pygame.sprite.Sprite):
         self.left = Board.left + x * self.cell_size
         self.top = Board.top + y * self.cell_size
         self.rect = pygame.Rect((self.left, self.top), (self.cell_size, self.cell_size))
-        self.image = pygame.Surface((self.cell_size, self.cell_size))
-        self.image.fill(BLUE)
+        self.image = load_image("virus.png")
         self.way = " "
 
     def move(self):
@@ -169,22 +214,18 @@ class Virus(pygame.sprite.Sprite):
 
 class Loot(pygame.sprite.Sprite):
     def __init__(self, Board, x, y):
-        super().__init__(Lot_loot, game_sprites)
+        super().__init__(Lot_loot)
         self.cell_size = 4
         self.left = Board.left + x * Board.cell_size
         self.top = Board.top + y * Board.cell_size
         self.rect = pygame.Rect((self.left, self.top), (self.cell_size, self.cell_size))
-        self.image = pygame.Surface((self.cell_size, self.cell_size))
-        self.image.fill(WHITE)
+        self.image = load_image(random.choice(loot_list))
 
-
-def Score_counter(lvl, lvl_score, total_score):
-    score_surface.fill(RED)
-    lvl_print = score_font.render('Уровень: ' + str(lvl), 5, BLACK)
-    score_print = score_font.render('Счет: ' + str(total_score + lvl_score), 5, BLACK)
-    score_surface.blit(lvl_print, (10, 0))
-    score_surface.blit(score_print, (10, 30))
-    screen.blit(score_surface, (0, 12))
+def load_image(name):
+    fullname = os.path.join('data/images', name)
+    image = pygame.image.load(fullname)
+    image = image.convert_alpha()
+    return image
 
 
 def Respawn():
@@ -199,20 +240,6 @@ def Respawn():
         for j in range(field.width):
             Loot(field, j, i)
     pygame.sprite.groupcollide(Walls, Lot_loot, dokilla=False, dokillb=True)
-
-
-def training_text():
-    text_box = pygame.Surface((sc_width, sc_height / 8 + 200))
-    text_box.fill(WHITE)
-    text1 = score_font.render('Цель игры - набрать максимальное количество очков', 5, BLACK)
-    text2 = score_font.render('Избегайте вирусы и собирайте все на своем пути', 5, BLACK)
-    text3 = score_font.render('Управление осуществляется с помощью клавиш W A S D', 5, BLACK)
-    text4 = sb_font.render('Удачи!', 5, BLACK)
-    text_box.blit(text1, (50, 20))
-    text_box.blit(text2, (50, 50))
-    text_box.blit(text3, (50, 80))
-    text_box.blit(text4, (50, 110))
-    screen.blit(text_box, (0, 0))
 
 
 '''Шрифты'''
@@ -247,14 +274,14 @@ Viruses = pygame.sprite.Group()
 Lot_loot = pygame.sprite.Group()
 
 '''Список стен'''
-wall_list = {(6, 2, 2, 2), (6, 23, 5, 2), (1, 1, 1, 28), (9, 25, 2, 2), (6, 23, 5, 2),
-             (6, 26, 2, 2), (9, 17, 2, 5), (9, 14, 5, 2), (9, 8, 2, 5), (4, 20, 4, 2),
-             (3, 17, 2, 10), (6, 11, 2, 8), (3, 14, 5, 2), (27, 3, 3, 4), (24, 3, 2, 4),
-             (18, 1, 5, 6), (12, 1, 5, 6), (9, 3, 2, 2), (6, 5, 5, 2), (4, 8, 4, 2),
+wall_list = {(6, 2, 2, 2), (6, 23, 5, 2), (1, 1, 1, 28), (9, 25, 2, 2),
+             (6, 26, 2, 2), (9, 17, 2, 5), (9, 14, 3, 2), (9, 8, 2, 5), (5, 20, 3, 2),
+             (3, 17, 2, 10), (6, 11, 2, 8), (3, 14, 3, 2), (27, 3, 3, 4), (24, 3, 2, 4),
+             (18, 2, 5, 5), (12, 2, 5, 5), (9, 3, 2, 2), (6, 5, 5, 2), (5, 8, 3, 2),
              (3, 3, 2, 10), (6, 2, 2, 2), (1, 28, 31, 1), (31, 1, 1, 28), (1, 1, 31, 1),
-             (12, 8, 5, 2), (12, 11, 2, 8), (12, 20, 5, 2), (12, 23, 5, 6), (15, 11, 1, 8),
+             (12, 8, 5, 2), (12, 11, 2, 8), (12, 20, 5, 2), (12, 23, 5, 5), (15, 11, 1, 8),
              (16, 11, 3, 1), (16, 18, 3, 1), (18, 8, 8, 2), (19, 11, 1, 3), (19, 16, 1, 3),
-             (18, 20, 8, 2), (18, 23, 5, 6), (21, 17, 2, 3), (21, 10, 2, 3), (21, 14, 3, 2),
+             (18, 20, 8, 2), (18, 23, 5, 5), (21, 17, 2, 3), (21, 10, 2, 3), (21, 14, 3, 2),
              (24, 11, 2, 8), (24, 23, 2, 4), (27, 23, 3, 4), (27, 17, 3, 5), (27, 14, 4, 2), (27, 8, 3, 5)}
 
 '''Точки, в которых можно поменять маршрут'''
@@ -282,8 +309,6 @@ sb = Status_bar()
 '''Игровое поле:'''
 screen.fill(WHITE)
 field = Board(31, 28, 22)
-field.image.fill(GREEN)
-# field.image.set_alpha(150)
 
 '''Стены:'''
 for w in wall_list:
@@ -298,10 +323,7 @@ try_way = 1
 virus_list = []
 
 '''Лут:'''
-for i in range(field.height):
-    for j in range(field.width):
-        Loot(field, j, i)
-pygame.sprite.groupcollide(Walls, Lot_loot, dokilla=False, dokillb=True)
+loot_list = ['loot1.png', 'loot2.png', 'loot3.png', 'loot4.png']
 
 '''Счетчик очков'''
 score_surface = pygame.Surface((171, 70))
@@ -317,7 +339,7 @@ game_over = False
 running = True
 while running:
     if menu:
-        screen.fill(WHITE)
+        screen.blit(load_image('bg.png'), (0,0))
         button1.render('Новая игра')
         button2.render('Обучение')
         button3.render('Выход из игры')
@@ -357,7 +379,17 @@ while running:
                 elif button3.rect.collidepoint(pygame.mouse.get_pos()) and event.button == 1:
                     running = False
         menu_sprites.draw(screen)
-        training_text()
+        text_box = pygame.Surface((sc_width, sc_height / 8 + 200))
+        text_box.fill(WHITE)
+        text1 = score_font.render('Цель игры - набрать максимальное количество очков', 5, BLACK)
+        text2 = score_font.render('Избегайте вирусы и собирайте все на своем пути', 5, BLACK)
+        text3 = score_font.render('Управление осуществляется с помощью клавиш W A S D', 5, BLACK)
+        text4 = sb_font.render('Удачи!', 5, BLACK)
+        text_box.blit(text1, (50, 20))
+        text_box.blit(text2, (50, 50))
+        text_box.blit(text3, (50, 80))
+        text_box.blit(text4, (50, 110))
+        screen.blit(text_box, (0, 0))
 
     elif start_game:
         screen.fill(WHITE)
@@ -379,12 +411,12 @@ while running:
                 player.move(new_way)
         if pygame.sprite.spritecollide(player, Lot_loot, dokill=True):
             lvl_score += 1 * lvl
-        Score_counter(lvl, lvl_score, total_score)
         if pygame.sprite.spritecollide(player, Viruses, dokill=True):
             start_game = False
             game_over = True
             virus_list.clear()
             Viruses.empty()
+            Lot_loot.empty()
         if lvl_score == 318 * lvl:
             start_game = False
             next_lvl = True
@@ -392,13 +424,20 @@ while running:
             virus_list.append(Virus(field, 15, 16))
             lvl += 1
             lvl_score = 0
+        score_surface.fill(RED)
+        lvl_print = score_font.render('Уровень: ' + str(lvl), 5, BLACK)
+        score_print = score_font.render('Счет: ' + str(total_score + lvl_score), 5, BLACK)
+        score_surface.blit(lvl_print, (10, 0))
+        score_surface.blit(score_print, (10, 30))
+        screen.blit(score_surface, (0, 12))
         game_sprites.draw(screen)
+        Lot_loot.draw(screen)
         Viruses.draw(screen)
 
     elif next_lvl:
         screen.fill(WHITE)
         button1.render('Следующий уровень')
-        button2.render('Управление')
+        button2.render('Обучение')
         button3.render('Выход из игры')
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -420,7 +459,7 @@ while running:
     elif game_over:
         screen.fill(WHITE)
         button1.render('Вернуться в меню')
-        button2.render('Управление')
+        button2.render('Обучение')
         button3.render('Выход из игры')
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
