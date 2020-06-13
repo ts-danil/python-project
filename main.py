@@ -1,6 +1,8 @@
 import pygame
 import random
 import os
+pygame.init()
+
 
 class Menu(pygame.sprite.Sprite):
     def __init__(self, num):
@@ -18,8 +20,10 @@ class Menu(pygame.sprite.Sprite):
         self.print = menu_font.render(name, 5, BLACK)
         if self.rect.collidepoint(pygame.mouse.get_pos()):
             self.image.fill(GREEN)
+            self.image.set_alpha(255)
         else:
             self.image.fill(BLUE)
+            self.image.set_alpha(200)
         self.image.blit(self.print, (20, self.height / 8))
 
 
@@ -36,6 +40,9 @@ class Status_bar(pygame.sprite.Sprite):
 
     def render(self, text1, text2, color1, color2):
         self.image.fill(self.color)
+        self.image.set_alpha(200)
+        if self.rect.collidepoint(pygame.mouse.get_pos()):
+            self.image.set_alpha(255)
         if self.color == color1:
             self.color = color2
         else:
@@ -56,13 +63,6 @@ class Board(pygame.sprite.Sprite):
         self.top = (sc_height - (height * cell_size)) / 2
         self.rect = pygame.Rect((self.left, self.top), (self.width * self.cell_size, self.height * self.cell_size))
         self.image = load_image('board.png')
-
-    def render(self):
-        for i in range(self.height):
-            for j in range(self.width):
-                left = j * self.cell_size
-                top = i * self.cell_size
-                pygame.draw.rect(self.image, BLACK, (left, top, self.cell_size, self.cell_size), 1)
 
 
 class Wall(pygame.sprite.Sprite):
@@ -221,6 +221,7 @@ class Loot(pygame.sprite.Sprite):
         self.rect = pygame.Rect((self.left, self.top), (self.cell_size, self.cell_size))
         self.image = load_image(random.choice(loot_list))
 
+
 def load_image(name):
     fullname = os.path.join('data/images', name)
     image = pygame.image.load(fullname)
@@ -230,6 +231,7 @@ def load_image(name):
 
 def Respawn():
     global player, new_way, virus_list
+    screen.blit(load_image('game_bg.png'), (0, 0))
     player.rect = pygame.Rect(player.left, player.top, player.cell_size, player.cell_size)
     player.way = " "
     new_way = " "
@@ -249,12 +251,13 @@ score_font = pygame.font.SysFont('Comic Sans MS', 24)
 sb_font = pygame.font.SysFont('Comic Sans MS', 50)
 
 '''Цвета'''
-BLACK, WHITE, RED, GREEN, BLUE = (0, 0, 0), (255, 255, 255), (255, 0, 0), (0, 255, 0), (0, 0, 255)
+BLACK, WHITE, RED, GREEN, BLUE = (0, 0, 0), (255, 255, 255), (255, 80, 80), (80, 255, 80), (120, 120, 255)
 
 '''Параметры окна'''
 sc_size = sc_width, sc_height = 1024, 640
 screen = pygame.display.set_mode(sc_size)
 pygame.display.set_caption("COVIDMAN")
+pygame.display.set_icon(load_image('icon.png'))
 
 '''Частота обновления'''
 clock = pygame.time.Clock()
@@ -331,6 +334,13 @@ total_score = 0
 lvl_score = 0
 lvl = 1
 
+'''Звуки'''
+pygame.mixer.music.load('data/sound/menu.wav')
+pygame.mixer.music.play(-1)
+game_over_sound = pygame.mixer.Sound('data/sound/game_over.wav')
+game_sound = pygame.mixer.Sound('data/sound/game.wav')
+menu_sound = pygame.mixer.Sound('data/sound/menu.wav')
+
 menu = True
 training = False
 start_game = False
@@ -339,10 +349,11 @@ game_over = False
 running = True
 while running:
     if menu:
-        screen.blit(load_image('bg.png'), (0,0))
+        screen.blit(load_image('bg.png'), (0, 0))
         button1.render('Новая игра')
         button2.render('Обучение')
         button3.render('Выход из игры')
+        menu_sprites.draw(screen)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -356,16 +367,17 @@ while running:
                     lvl = 1
                     virus_list.append(Virus(field, 15, 16))
                     Respawn()
+                    pygame.mixer.music.stop()
+                    game_sound.play(-1)
                     start_game = True
                 elif button2.rect.collidepoint(pygame.mouse.get_pos()) and event.button == 1:
                     menu = False
                     training = True
                 elif button3.rect.collidepoint(pygame.mouse.get_pos()) and event.button == 1:
                     running = False
-        menu_sprites.draw(screen)
 
     elif training:
-        screen.fill(WHITE)
+        screen.blit(load_image('bg.png'), (0, 0))
         button1.render('Вернуться в меню')
         button2.render('Кнопка для красоты')
         button3.render('Слишком сложно, до свидания')
@@ -376,11 +388,11 @@ while running:
                 if button1.rect.collidepoint(pygame.mouse.get_pos()) and event.button == 1:
                     training = False
                     menu = True
+                    pygame.mixer.music.play(-1)
                 elif button3.rect.collidepoint(pygame.mouse.get_pos()) and event.button == 1:
                     running = False
         menu_sprites.draw(screen)
-        text_box = pygame.Surface((sc_width, sc_height / 8 + 200))
-        text_box.fill(WHITE)
+        text_box = load_image('bg_training.png')
         text1 = score_font.render('Цель игры - набрать максимальное количество очков', 5, BLACK)
         text2 = score_font.render('Избегайте вирусы и собирайте все на своем пути', 5, BLACK)
         text3 = score_font.render('Управление осуществляется с помощью клавиш W A S D', 5, BLACK)
@@ -392,7 +404,6 @@ while running:
         screen.blit(text_box, (0, 0))
 
     elif start_game:
-        screen.fill(WHITE)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -414,16 +425,12 @@ while running:
         if pygame.sprite.spritecollide(player, Viruses, dokill=True):
             start_game = False
             game_over = True
-            virus_list.clear()
-            Viruses.empty()
-            Lot_loot.empty()
+            game_sound.stop()
+            game_over_sound.play()
         if lvl_score == 318 * lvl:
             start_game = False
             next_lvl = True
             total_score += lvl_score
-            virus_list.append(Virus(field, 15, 16))
-            lvl += 1
-            lvl_score = 0
         score_surface.fill(RED)
         lvl_print = score_font.render('Уровень: ' + str(lvl), 5, BLACK)
         score_print = score_font.render('Счет: ' + str(total_score + lvl_score), 5, BLACK)
@@ -435,17 +442,24 @@ while running:
         Viruses.draw(screen)
 
     elif next_lvl:
-        screen.fill(WHITE)
+        screen.blit(load_image('game_bg.png'), (0, 0))
+        game_sprites.draw(screen)
+        Lot_loot.draw(screen)
+        Viruses.draw(screen)
         button1.render('Следующий уровень')
         button2.render('Обучение')
         button3.render('Выход из игры')
+        menu_sprites.draw(screen)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
             elif event.type == sb_update_event:
-                sb.render('Уровень #' + str(lvl - 1), 'пройден', WHITE, GREEN)
+                sb.render('Уровень #' + str(lvl), 'пройден', WHITE, GREEN)
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if button1.rect.collidepoint(pygame.mouse.get_pos()) and event.button == 1:
+                    virus_list.append(Virus(field, 15, 16))
+                    lvl += 1
+                    lvl_score = 0
                     Respawn()
                     next_lvl = False
                     start_game = True
@@ -454,13 +468,16 @@ while running:
                     training = True
                 elif button3.rect.collidepoint(pygame.mouse.get_pos()) and event.button == 1:
                     running = False
-        menu_sprites.draw(screen)
 
     elif game_over:
-        screen.fill(WHITE)
+        screen.blit(load_image('game_bg.png'), (0, 0))
+        game_sprites.draw(screen)
+        Lot_loot.draw(screen)
+        Viruses.draw(screen)
         button1.render('Вернуться в меню')
         button2.render('Обучение')
         button3.render('Выход из игры')
+        menu_sprites.draw(screen)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -470,13 +487,21 @@ while running:
                 if button1.rect.collidepoint(pygame.mouse.get_pos()) and event.button == 1:
                     game_over = False
                     menu = True
+                    game_over_sound.stop()
+                    pygame.mixer.music.play(-1)
+                    virus_list.clear()
+                    Viruses.empty()
+                    Lot_loot.empty()
                 elif button2.rect.collidepoint(pygame.mouse.get_pos()) and event.button == 1:
+                    game_over_sound.stop()
+                    pygame.mixer.music.play(-1)
+                    virus_list.clear()
+                    Viruses.empty()
+                    Lot_loot.empty()
                     game_over = False
                     training = True
                 elif button3.rect.collidepoint(pygame.mouse.get_pos()) and event.button == 1:
                     running = False
-        menu_sprites.draw(screen)
-
     clock.tick(fps)
     pygame.display.flip()
 pygame.quit()
